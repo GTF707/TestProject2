@@ -30,15 +30,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Shape}/{action=Index}/{id?}");
 
-Environment.SetEnvironmentVariable("GEOSERVER_HOME", @"C:\GeoServer");
-var geoserver = new Process
-{
-    StartInfo = new ProcessStartInfo
-    {
-        FileName = "cmd",
-        Arguments = "/C start \"GeoServer\" \"C:\\geoserver\\bin\\startup.bat",
-    }
-};
-geoserver.Start();
+
 
 app.Run();

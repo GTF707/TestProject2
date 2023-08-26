@@ -1,11 +1,8 @@
-﻿const { ajax } = require("jquery");
-
-var map = undefined;
+﻿var map = undefined;
 var type = "";
 var marker = [];
-var result = [];
 var polygon = undefined;
-var p = new Coordinates();
+var layers = [];
 
 map = L.map('map').setView([55.75411396899196, 37.62039668151654], 10);
 
@@ -22,7 +19,23 @@ L.tileLayer.wms('http://localhost:8080/geoserver/TestProject2/wms', {
 
 
 
-
+map.on('click', function (event) {
+    var data = JSON.stringify({
+        "point": L.marker(event.latlng)
+    })
+    fetch("http://localhost:5175/Shape/CheckShape", {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: data
+    }).then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    });
+});
 
 function showMenu() {
     const popup = document.getElementById("popup")
@@ -48,23 +61,22 @@ function Point() {
     map.on('click', function (event) {
 
         var mark = L.marker(event.latlng, { draggable: true }).addTo(map);
-        p.Layers.push(mark);
+        layers.push(mark.toGeoJSON());
         map.off('click');
-        result.push()
         type = "";
     });
 }
 
 
 function Poligon() {
-    
+
 
     var polygonCoords = [];
     markerk = [];
     if (type === "poligon") {
         type = "";
         map.off('click');
-        
+
         return;
     }
     map.off('click');
@@ -75,13 +87,13 @@ function Poligon() {
         if (polygonCoords.length > 2) {
             if (!polygon) {
                 polygon = L.polygon(polygonCoords, { color: 'blue' }).addTo(map);
-                
+                layers.push(polygon);
             } else {
                 polygon.setLatLngs(polygonCoords);
             }
         }
 
-       
+
     });
 }
 
@@ -105,9 +117,9 @@ function Rectangle() {
             endLatLng = event.latlng;
             var points = L.latLngBounds(startLatLng, endLatLng);
             rectangle = L.rectangle(points, { color: 'black' }).addTo(map);
-           
-                p.Layers.push(rectangle);
-            
+
+            layers.push(rectangle.toGeoJSON());
+
 
             startLatLng = null;
             endLatLng = null;
@@ -146,7 +158,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     saveBtn.addEventListener("click", function () {
-       
+
 
         removeMarkers(marker);
         modal.style.display = "none";
@@ -157,31 +169,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 function Save() {
-    p.Director = document.getElementById("directorInput").value;
-    p.Address = document.getElementById("addressInput").value;
-    p.TypeActivity = document.getElementById("activityInput").value;
     if (polygon) {
-        p.Layers.push(polygon);
+        layers.push(polygon.toGeoJSON());
     }
-    
+
+    const data = JSON.stringify({
+        "Director": document.getElementById("directorInput").value,
+        "Address": document.getElementById("addressInput").value,
+        "TypeActivity": document.getElementById("activityInput").value,
+        "type": "FeatureCollection",
+        "features": layers
+    })
+
     fetch("http://localhost:5175/Shape/Create", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(p)
-    }).then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
+        body: data
     })
-        .then(data => {
-            console.log('Figures were successfully sent to the backend', data);
-        })
-        .catch(error => {
-            console.error('There was a problem sending figures to the backend', error);
-        });
+
 }
 
 
