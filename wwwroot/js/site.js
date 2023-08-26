@@ -177,8 +177,11 @@ function Save() {
         "Director": document.getElementById("directorInput").value,
         "Address": document.getElementById("addressInput").value,
         "TypeActivity": document.getElementById("activityInput").value,
-        "type": "FeatureCollection",
-        "features": layers
+        "Feature": {
+            "type": "FeatureCollection",
+            "features": layers
+
+        }
     })
 
     fetch("http://localhost:5175/Shape/Create", {
