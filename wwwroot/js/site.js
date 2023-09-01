@@ -18,24 +18,37 @@ L.tileLayer.wms('http://localhost:8080/geoserver/TestProject2/wms', {
 }).addTo(map);
 
 
-
 map.on('click', function (event) {
+
     var data = JSON.stringify({
-        "point": L.marker(event.latlng)
-    })
+        "JsonNode": L.marker(event.latlng).toGeoJSON()
+    });
+
     fetch("http://localhost:5175/Shape/CheckShape", {
-        method: 'GET',
+        method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
         },
         body: data
-    }).then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    });
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then((body) => {
+            var json = JSON.stringify(body, null, 2);
+         
+
+
+            var a = L.popup()
+                .setLatLng(event.latlng)
+                .setContent('<pre>' + json + '</pre>');
+            a.openOn(map);
+        })
 });
+
 
 function showMenu() {
     const popup = document.getElementById("popup")
@@ -60,7 +73,7 @@ function Point() {
 
     map.on('click', function (event) {
 
-        var mark = L.marker(event.latlng, { draggable: true }).addTo(map);
+        var mark = L.marker(event.latlng).addTo(map);
         layers.push(mark.toGeoJSON());
         map.off('click');
         type = "";
@@ -87,7 +100,7 @@ function Poligon() {
         if (polygonCoords.length > 2) {
             if (!polygon) {
                 polygon = L.polygon(polygonCoords, { color: 'blue' }).addTo(map);
-                layers.push(polygon);
+                layers.push(polygon.toGeoJSON());
             } else {
                 polygon.setLatLngs(polygonCoords);
             }
@@ -191,10 +204,6 @@ function Save() {
         },
         body: data
     })
+    layers = [];
 
 }
-
-
-
-
-
